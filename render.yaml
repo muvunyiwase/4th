@@ -9,10 +9,9 @@ services:
         value: production
       - key: PORT
         value: 3000
-      # Add your email credentials in Render dashboard
-      - key: EMAIL_USER
+      - key: SUPABASE_URL
         sync: false
-      - key: EMAIL_PASS
+      - key: SUPABASE_ANON_KEY
         sync: false
     healthCheckPath: /api/health
     autoDeploy: true
