@@ -1,0 +1,20 @@
+/* Hero section image fix */
+.hero-image-wrap img,
+.hero-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 20px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Make first section cleaner and centered */
+.hero {
+  background: #ffffff;
+}
+
+.hero-text {
+  text-align: left;
+}

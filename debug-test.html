@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test - Backend Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 300px;
+        }
+        .log {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backend Connection Debug Test</h1>
+    
+    <div class="test-section info">
+        <h2>Current Configuration</h2>
+        <p><strong>Backend URL:</strong> <code id="backendUrl">http://localhost:3000/api</code></p>
+        <p><strong>Page URL:</strong> <code id="pageUrl"></code></p>
+        <p><strong>Is Localhost:</strong> <span id="isLocalhost"></span></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 1: Health Check</h2>
+        <p>Test if backend is running and accessible.</p>
+        <button id="testHealthBtn">Test Health Endpoint</button>
+        <div id="healthResult" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Contact Form API</h2>
+        <p>Test the contact form submission endpoint.</p>
+        <button id="testContactBtn">Test Contact Endpoint</button>
+        <div id="contactResult" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Browser Console</h2>
+        <p>Open browser developer tools (F12) and check:</p>
+        <ol>
+            <li>Console tab for any errors</li>
+            <li>Network tab for API requests</li>
+            <li>Check if requests are being blocked (CORS)</li>
+        </ol>
+        <button id="openConsoleBtn">Open Console Instructions</button>
+    </div>
+    
+    <div class="test-section info">
+        <h2>Common Issues & Solutions</h2>
+        <h3>1. "Network error" or "Failed to fetch"</h3>
+        <ul>
+            <li>Backend not running: Run <code>cd backend && npm run simple</code></li>
+            <li>Wrong port: Check console for backend port</li>
+            <li>CORS issue: Backend needs proper CORS headers</li>
+        </ul>
+        
+        <h3>2. Backend running but not accessible</h3>
+        <ul>
+            <li>Firewall blocking port 3000</li>
+            <li>Another service using port 3000</li>
+            <li>Backend crashed - check terminal for errors</li>
+        </ul>
+        
+        <h3>3. Form works but no email</h3>
+        <ul>
+            <li>Email not configured (test mode only)</li>
+            <li>Gmail credentials missing or incorrect</li>
+            <li>Check backend logs for email errors</li>
+        </ul>
+    </div>
+
+    <script>
+        // Display current URL info
+        document.getElementById('pageUrl').textContent = window.location.href;
+        document.getElementById('isLocalhost').textContent = 
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'Yes' : 'No';
+        
+        // Test health endpoint
+        document.getElementById('testHealthBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('testHealthBtn');
+            const resultDiv = document.getElementById('healthResult');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            resultDiv.innerHTML = 'Testing connection to backend...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                    <strong>Response:</strong><br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <div class="success">✅ Backend is running and accessible!</div>
+                `;
+                
+                // Update backend URL if port is different
+                if (data.port && data.port !== 3000) {
+                    document.getElementById('backendUrl').textContent = `http://localhost:${data.port}/api`;
+                    resultDiv.innerHTML += `<div class="info">💡 Backend is on port ${data.port}, not 3000. Update contact-form.js if needed.</div>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <strong>Error:</strong> ${error.message}<br>
+                    <div class="error">❌ Cannot connect to backend</div>
+                    <p>Possible issues:</p>
+                    <ul>
+                        <li>Backend not running: Run <code>cd backend && npm run simple</code></li>
+                        <li>Wrong port: Backend might be on a different port</li>
+                        <li>CORS issue: Check backend CORS configuration</li>
+                    </ul>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Test Health Endpoint';
+            }
+        });
+        
+        // Test contact endpoint
+        document.getElementById('testContactBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('testContactBtn');
+            const resultDiv = document.getElementById('contactResult');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            resultDiv.innerHTML = 'Testing contact form submission...';
+            
+            const testData = {
+                name: 'Debug Test User',
+                email: 'debug@test.com',
+                website: '1',
+                branding: '0',
+                ecommerce: '0',
+                seo: '0',
+                message: 'This is a test message from debug page'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                    <strong>Request Data:</strong><br>
+                    <pre>${JSON.stringify(testData, null, 2)}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <div class="success">✅ Contact endpoint is working!</div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <strong>Error:</strong> ${error.message}<br>
+                    <div class="error">❌ Cannot connect to contact endpoint</div>
+                    <p>Details: ${error}</p>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Test Contact Endpoint';
+            }
+        });
+        
+        // Open console instructions
+        document.getElementById('openConsoleBtn').addEventListener('click', () => {
+            alert('To open developer tools:\n\nWindows/Linux: Press F12\nMac: Cmd+Option+I\n\nThen check:\n1. Console tab for errors\n2. Network tab for API requests\n3. Look for red errors or blocked requests');
+        });
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            console.log('Debug page loaded. Backend should be at http://localhost:3000');
+            console.log('If you see "Network error", check:');
+            console.log('1. Is backend running? (cd backend && npm run simple)');
+            console.log('2. Check browser console for CORS errors');
+            console.log('3. Test with the buttons above');
+        });
+    </script>
+</body>
+</html>
